@@ -1,0 +1,142 @@
+##################
+##################
+##              ##
+##    HiveNet   ##
+##              ##
+##################
+##################
+
+## CONTENTS ##
+1................OVERVIEW
+1.1..................CONCEPT
+1.2..................GOALS
+1.3..................DESIGN PRINCIPLES
+1.3.1....................CODING RULES
+1.3.2....................VERSIONING
+1.3.3....................BRANCHING AND PULL REQUESTS
+1.3.4....................ISSUES
+1.4..................TERMINOLOGY
+2................DOCUMENTATION
+2.1..................SPECIFICATIONS
+2.1.1....................HIVENET
+2.1.2....................SWARM
+2.1.3....................FOREST
+2.1.4....................BUNDLE
+2.1.5....................HONEY
+
+1 OVERVIEW
+1.1 CONCEPT
+HiveNet will be a decentralized data storage network that allows for files to be stored remotely, but never as a complete file on a single computer, server or node. It will achieve this by breaking up the file into packets of a small size, and having these constantly transferred between users within the network. There will be extensive checking of the files in order to prevent corruption or loss of packets. Each packet will be heavily encrypted.
+
+Users within the network can donate bandwidth as a value of storage over time (GB/hr). Donation of bandwidth will allow the user to earn an access token as a percentage of the total remaining from the intially offered total. These access tokens can then be used to upload data to the network. This system allows for users to dynamically increase their total number of access tokens, which offer a static amount of storage room. It means that the total allocated bandwidth in the network won't be exceeded. The access tokens can be sold on a secondary market so users can upload data without donating bandwidth.
+
+1.2 GOALS
+The design and completion of HiveNet will be done in stages. Concurrency can be a nightmare in the development stages, so energy will be focussed on individual components by individual members of the team. The steps will be as follows:
+    a. Create a listener in the main loop.
+    b. Implement the swarm.
+    c. Design and implement the forest and bundle components concurrently.
+    d. Implement honey.
+
+1.3 DESIGN PRINCIPLES
+    1.3.1 CODING RULES
+        1.3.1.1 Files
+            1.3.1.1.1 Each component of the system will require a separate file that includes classes and functions which are named according to the defined rules.
+            1.3.1.1.2 The main file will function under the principle of being lightweight.
+        1.3.1.2 Indentation
+            1.3.1.2.1 Indents will be 4 spaces and not a single tab. Find a shortcut to change your tabs to spaces.
+            1.3.1.2.2 The maximum depth of tabs will be a depth of 4 for functions. Anymore and it means you're doing something wrong.
+        1.3.1.3 Naming
+            1.3.1.3.1 The premise of simple descriptions will be applied.
+            1.3.1.3.2 All names will use underscoring rather than camelCase.
+            1.3.1.3.3 Variables or functions that remain within the scope of another function or class will use simple names such as "tmp" as opposed to "temporary_counter" and "inc" rather than "increment_by_one".
+        1.3.1.4 Spacing
+            1.3.1.4.1 A single line should not exceed 80 characters as is the ANSI standard for a terminal.
+            1.3.1.4.2 Extended string concatenations should be avoided. Write a separate function to handle these cases if required.
+        1.3.1.5 Comments
+            1.3.1.5.1 Do not use comments to explain how you did something, but rather explain why. If you are required to explain your reasoning, the code is too complex and prone to failure. Only do this if you are desperate and your brain damaged hack is the only thing that works. Try and take a personal note to come and fix this or get help.
+            1.3.1.5.2 Do not comment within a function unless required. This means you are explaining your reasoning which is frowned upon.
+            1.3.1.5.3 Comments for functions should not exceed 4 lines.
+        1.3.1.6 Variables
+            1.3.1.6.1 Do not use global functions unless absolutely necessary. And even then don't use them.
+            1.3.1.6.2 Always remember to clear your allocated memory when not in use. A generalised function can be used to zero all the bits. This is a security measure to increase the integrity of HiveNet.
+            1.3.1.6.3 Generally try to initialize a variable before setting the value. In Python this can be done with var = None. This will help in porting to C or C++.
+            1.3.1.6.4 Do not pointlessly use storage or RAM. While we aren't limited by computer constraints like in the 70s, HiveNet still needs to run with as little intensity on the system as possible, aside from bandwidth.
+        1.3.1.7 Functions
+            1.3.1.7.1 All functions will remain in under 24 lines in length except in the case of extended and easy to understand switch or if/else statements.
+            1.3.1.7.2 Never have more than one return in a single function.
+            1.3.1.7.3 Try and make each function as general as possible so that it can be reused. 
+        1.3.1.8 Classes
+            1.3.1.8.1 A single class should not hold more than 16 attributes. Make additional classes if relevant.
+            1.3.1.8.2 Functions within classes should be limited within the scope of the class. Use more general function if they can be applied across classes.
+        1.3.1.9 General
+            1.3.1.9.1 Use double quotation marks as the first bounds, followed by single quotations.
+            1.3.1.9.2 Do not use try/except unless prototyping a concept. This means you expect your code to fail. Don't let it fail.
+
+    1.3.2 VERSIONING
+        1.3.2.1 The master branch will act as the main version.
+        1.3.2.2 Versioning will act under the principle that large configuration changes will change the main version while smaller edits will change the subversion.
+        1.3.2.3 A major version change will require a consensus on the changes by the whole team.
+
+    1.3.3 BRANCHING AND PULL REQUESTS
+        1.3.3.1 The master branch will never be merged to except from the development branch when all of the code has been reviewed.
+        1.3.3.2 When updating a new element of the code, always make a branch with a simple name. This will allow you to break everything privately.
+        1.3.3.3 Always make a pull request and merging to development branch. This code will be reviewed. Give a detailed description of additions and the reasoning for it.
+        1.3.3.4 In the event of merge conflict, don't be frightened but rather carefully take the time to go through the conflict and pick what you want. Always test before completing the merge.
+        1.3.3.5 Do not run a cherry pick function in git.
+        1.3.3.6 More commits are healthier. The deeper the branches, the more commits are recommended.
+        1.3.3.7 If you make a mistake, which you will, keep track of the changes you made privately, and revert back to the last commit.
+
+    1.3.4 ISSUES
+        1.3.4.1 Open new issues when found or raised.
+        1.3.4.2 Only close an issue when a resolution is appropriately found and completed.
+
+1.4 TERMINOLOGY
+HiveNet             A decentralized data storage network.
+Listener            Looping function that listens in a port for incoming data and acts on it.
+Swarm               The blockchain of the network of nodes that have been involved with HiveNet.
+Active swarm        The network of nodes that are currently online and donating bandwidth to HiveNet.
+Node                A single computer that exists within a swarm.
+Forest              A blockchain of the trees for each file that is uploaded to HiveNet.
+Tree                A merkle tree that defines a file based on its bundles.
+Bundle              A small segment of a file.
+Honey               An access token to HiveNet allowing for upload of bundles.
+Blockchain          A ledger of all transactions.
+
+## EDIT BELOW THIS LINE ##
+2 DOCUMENTATION
+2.1 SPECIFICATIONS
+    2.1.1 HIVENET
+        2.1.1.1 Main Loop
+        2.1.1.2 Listener
+
+    2.1.2 SWARM
+        2.1.2.1 Joining a swarm involves adding the IP address of any node in the currently active swarm.
+        2.1.2.2 In starting a swarm, a queen node will be generated by adding their own IP address.
+        2.1.2.3 If the queen node goes down, another queen node will be arbitrarily selected out of the highest bandwidth allocations.
+        2.1.2.4 The queen node will act as the final say in blockchain conflicts, even though they should very rarely arise.
+        2.1.2.5 When a new node joins an active swarm, this node will update its swarm blockchain, then generate an active swarm list. It will then generate a hash of the blockchain, update its hash in the active swarm list, and then send the blockchain to a random node that doesn't share it's hash in the active swarm.
+        2.1.2.6 The active swarm list will be an array of node objects with the following details:
+                 - hostname
+                 - public key
+                 - datetime of start
+                 - bandwidth allocation
+                 - current swarm hash
+                 - current forest hash
+                 - last bundle hash
+                 - current honey hash
+        2.1.2.7 The swarm blockchain will be a series of node objects with a previous hash chain set up that has the following details:
+                 - hostname
+                 - public key
+                 - state change (up, down, or change in settings)
+                 - bandwidth allocation
+                 - 
+        2.1.2.8 When a node recieves a new swarm blockchain, it runs a merge process which generates a new swarm blockchain incorporating any new information. It then creates a hash from this, and responds to the sender with this. It then generates an active swarm list.
+        2.1.2.9 When a node recieves a swarm blockchain hash after sending the swarm blockchain, it adds this to its active swarm list object's current swarm hash, and replies with its own current swarm hash.
+        2.1.2.10 When a node recieves a replying swarm blockchain hash, it updates its active swarm list, and sends the swarm blockchain to a random active node that doesn't share the same hash.
+
+    2.1.3 FOREST
+
+    2.1.4 BUNDLE
+
+    2.1.5 HONEY
+
