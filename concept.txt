@@ -15,6 +15,7 @@
 1.3.2....................VERSIONING
 1.3.3....................BRANCHING AND PULL REQUESTS
 1.3.4....................ISSUES
+1.3.5....................THREADING
 1.4..................TERMINOLOGY
 2................DOCUMENTATION
 2.1..................SPECIFICATIONS
@@ -85,14 +86,20 @@ The design and completion of HiveNet will be done in stages. Concurrency can be 
         1.3.3.5 Do not run a cherry pick function in git.
         1.3.3.6 More commits are healthier. The deeper the branches, the more commits are recommended.
         1.3.3.7 If you make a mistake, which you will, keep track of the changes you made privately, and revert back to the last commit.
+        1.3.3.8 Try to avoid using git add --all or similar commands. Try to only add the editted files relevant. If you are completely sure, then you can use the all command.
 
     1.3.4 ISSUES
         1.3.4.1 Open new issues when found or raised.
         1.3.4.2 Only close an issue when a resolution is appropriately found and completed.
 
+    1.3.5 THREADING
+        1.3.5.1 The concept of running new threads for processes will be used extensively. This will allow functions and processes to run concurrently on a single node.
+        1.3.5.2 Never leave threads hanging since it will wastefully use up RAM.
+        1.3.5.3 Duplicate processes will never be openned, meaning that if the same function has the same variables input, it should not be run until the prior thread is closed.
+
 1.4 TERMINOLOGY
 HiveNet             A decentralized data storage network.
-Listener            Looping function that listens in a port for incoming data and acts on it.
+Listener            An object with a looping function that listens in a port for incoming data and acts on it.
 Swarm               The blockchain of the network of nodes that have been involved with HiveNet.
 Active swarm        The network of nodes that are currently online and donating bandwidth to HiveNet.
 Node                A single computer that exists within a swarm.
@@ -107,7 +114,11 @@ Blockchain          A ledger of all transactions.
 2.1 SPECIFICATIONS
     2.1.1 HIVENET
         2.1.1.1 Main Loop
+            2.1.1.1.1 Should be lightweight and not exceed 24 lines.
+            2.1.1.1.2 Designed to generate relevant variables and objects to then call their relevant functions.
         2.1.1.2 Listener
+            2.1.1.2.1 Will run a constant loop that listens on a given port. It will act on the data that it recieves by calling external functions.
+            2.1.1.2.2 Object will store much of the global seeming data which can be easily passed to other functions.
 
     2.1.2 SWARM
         2.1.2.1 Joining a swarm involves adding the IP address of any node in the currently active swarm.
