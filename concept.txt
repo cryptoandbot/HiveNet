@@ -18,12 +18,15 @@
 1.3.5....................THREADING
 1.4..................TERMINOLOGY
 2................DOCUMENTATION
-2.1..................SPECIFICATIONS
+2.1..................DESIGN SPECIFICATIONS
 2.1.1....................HIVENET
 2.1.2....................SWARM
 2.1.3....................FOREST
 2.1.4....................BUNDLE
 2.1.5....................HONEY
+2.2..................COMMUNICATION
+2.2.1....................PROTOCOLS
+2.2.2....................DESCRIPTORS
 
 1 OVERVIEW
 1.1 CONCEPT
@@ -111,7 +114,7 @@ Blockchain          A ledger of all transactions.
 
 ## EDIT BELOW THIS LINE ##
 2 DOCUMENTATION
-2.1 SPECIFICATIONS
+2.1 DESIGN SPECIFICATIONS
     2.1.1 HIVENET
         2.1.1.1 Main Loop
             2.1.1.1.1 Should be lightweight and not exceed 24 lines.
@@ -151,3 +154,10 @@ Blockchain          A ledger of all transactions.
 
     2.1.5 HONEY
 
+2.2 COMMUNICATION
+    2.2.1 PROTOCOLS
+    2.2.2 DESCRIPTORS
+        2.2.2.1 PREFIX STRUCTURE
+            2.2.2.1.1 In a communication, the first 8 bits will define the nature of the communication
+                REQUSWRM - request current swarm blockchain
+                LTSTSWRM - following content is the latest swarm
