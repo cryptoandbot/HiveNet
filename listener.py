@@ -16,7 +16,9 @@ import pickle
 class Listener():
     def __init__(self):
         self.port = 1984
-
+    
+    # loop to constantly listen for socket and perform actions accordingly
+    # should add threading
     def listen(self, swarm, settings):
         while True:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  
@@ -28,25 +30,25 @@ class Listener():
             conn.close()
             s.close()
 
+    # responds with swarm list in pickle form
     def requswrm(self, swarm, settings):
-        data = "LTSTSWRM"
+        data = "LTSTSWRM" + pickle.dumps(swarm)
         conn.send(data).encode("utf-8")
-        data = "HOSTPUKY" + settings.public_key
-        conn.send(data).encode("utf-8")
-
-    def update_swarm(self, swarm, data, addr, conn):
+    
+    # response to the latest swarm being recieved
+    def ltstswrm(self, swarm, data, addr, conn):
         swarm = swarm.consolidate(pickle.loads(data), addr)
         data = "SWRMHASH" + swarm.active_swarm_hash()
         conn.send(data).encode("utf-8")
         swarm.update_all_swarm()
 
-
+    # interprets the type of data recieved and acts on it
     def data_translate(self, data, addr, conn, swarm, settings):
         data_type, data_content = data[0:8], data[8:]
         if data_type == "REQUSWRM":
             self.requswrm(swarm, settings)
         elif data_type == "LTSTSWRM":
-            self.update_swarm(swarm, data, addr)
+            self.ltstswrm(swarm, data, addr)
             
 
 # uses public key to encrypt byte data

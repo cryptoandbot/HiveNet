@@ -28,8 +28,8 @@ class Swarm():
         if hostname == "queen":
             self.add_to_swarm(settings.ip_address, settings.public_key, 0)
         else:
-            self.swarm, pk = self.eval_swarm(self.request_swarm(hostname, settings.public_key, settings.port))
-            self.add_to_swarm(hostname, pk, self.swarm[-1].hash())
+            self.swarm = self.eval_swarm(self.request_swarm(hostname, settings.public_key, settings.port))
+            self.add_to_swarm(settings.ip_address, settings.public_key, self.swarm[-1].hash())
             self.generate_active_swarm()
             self.update_all_swarm(settings)
 
@@ -44,9 +44,8 @@ class Swarm():
         data = 'REQUSWRM' + public_key
         s.send(data.encode('utf-8'))
         data = s.recv(4096).decode('utf-8')
-        data_public_key = s.recv(4069).decode('utf-8')
         s.close()
-        return data, data_public_key
+        return data
 
     def remove_bee(self, public_key):
         n = 0
