@@ -161,3 +161,4 @@ Blockchain          A ledger of all transactions.
             2.2.2.1.1 In a communication, the first 8 bits will define the nature of the communication
                 REQUSWRM - request current swarm blockchain
                 LTSTSWRM - following content is the latest swarm
+                SWRMHASH - hash of the active swarm
