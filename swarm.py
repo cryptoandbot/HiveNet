@@ -35,17 +35,17 @@ class Swarm():
 
     # interprets the byte stream for requested swarm and returns an array of Bees
     def eval_swarm(self, raw_swarm):
-        return eval(raw_swarm)
+        return pickle.loads(bytes(raw_swarm, 'utf-8'))
 
     # asks the queen bee (or given ip) for the latest swarm blockchain
     def request_swarm(self, hostname, public_key, port):
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.connect((hostname, port))
-        data = 'REQUSWRM' + public_key
+        data = 'REQUSWRM' + str(public_key)
         s.send(data.encode('utf-8'))
         data = s.recv(4096).decode('utf-8')
         s.close()
-        return data
+        return data[8:]
 
     def remove_bee(self, public_key):
         n = 0
@@ -96,7 +96,7 @@ class Swarm():
         n = 0
         for b in self.active_swarm:
             if n == rdm:
-                data = "LTSTSWRM" + pickle.dumps(self.swarm)
+                data = "LTSTSWRM" + str(pickle.dumps(self.swarm))
                 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 s.connect((b.ip_address, 1984))
                 s.send(data.encode('utf-8'))

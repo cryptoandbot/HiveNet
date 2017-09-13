@@ -32,8 +32,8 @@ class Listener():
             s.close()
 
     # responds with swarm list in pickle form
-    def requswrm(self, swarm, settings):
-        data = "LTSTSWRM" + pickle.dumps(swarm)
+    def requswrm(self, conn, swarm, settings):
+        data = "LTSTSWRM" + str(pickle.dumps(swarm))
         conn.send(data).encode("utf-8")
     
     # response to the latest swarm being recieved
@@ -47,9 +47,9 @@ class Listener():
     def data_translate(self, data, addr, conn, swarm, settings):
         data_type, data_content = data[0:8], data[8:]
         if data_type == "REQUSWRM":
-            self.requswrm(swarm, settings)
+            self.requswrm(conn, swarm, settings)
         elif data_type == "LTSTSWRM":
-            self.ltstswrm(swarm, data, addr)
+            self.ltstswrm(swarm, data, addr, conn)
             
 
 # uses public key to encrypt byte data
