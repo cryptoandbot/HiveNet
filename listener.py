@@ -23,6 +23,7 @@ class Listener():
         while True:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  
             s.bind(('', self.port))
+            s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             s.listen(10)
             conn, addr = s.accept()
             data = conn.recv(4069).decode("utf-8")

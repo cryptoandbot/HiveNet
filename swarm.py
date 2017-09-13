@@ -129,7 +129,7 @@ class Swarm():
 
     # adds an ip address and public key to the swarm as active
     def add_to_swarm(self, ip_address, public_key, prev_hash):
-        self.swarm.append(Bee(ip_address, public_key, prev_hash))
+        self.swarm.append(Bee(ip_address, public_key, prev_hash, 1, datetime.now()))
 
 # object that defines a single node on the network
 class Bee():
