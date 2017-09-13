@@ -156,6 +156,7 @@ Blockchain          A ledger of all transactions.
 
 2.2 COMMUNICATION
     2.2.1 PROTOCOLS
+	2.2.1.1 When communication is established between two nodes, only a single message is allowed to be sent at a time.  After receiving a message, this permits another message to be sent.  This does not apply for the first message in the connection.
     2.2.2 DESCRIPTORS
         2.2.2.1 PREFIX STRUCTURE
             2.2.2.1.1 In a communication, the first 8 bits will define the nature of the communication
