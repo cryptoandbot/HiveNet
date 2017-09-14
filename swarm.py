@@ -13,7 +13,7 @@ import socket
 import pickle
 from datetime import datetime
 from random import randint
-from listener import encrypt, decrypt
+from listener import encrypt, decrypt, recieve, make_16_bytes
 
 # object that has a collection of Bees within the network
 # has functions to manipulate the current swarm blockchain and transfer it
@@ -35,17 +35,19 @@ class Swarm():
 
     # interprets the byte stream for requested swarm and returns an array of Bees
     def eval_swarm(self, raw_swarm):
-        return pickle.loads(bytes(raw_swarm, 'utf-8'))
+        return pickle.loads(eval(raw_swarm))
 
     # asks the queen bee (or given ip) for the latest swarm blockchain
     def request_swarm(self, hostname, public_key, port):
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.connect((hostname, port))
-        data = 'REQUSWRM' + str(public_key)
-        s.send(data.encode('utf-8'))
-        data = s.recv(4096).decode('utf-8')
+        buffer = str(public_key)
+        data = "REQUSWRM" + str(24 + len(buffer)) + str(public_key)
+        s.send(bytes(data, "utf-8"))
+        data = ""
+        data = receive(s)
         s.close()
-        return data[8:]
+        return data[24:]
 
     def remove_bee(self, public_key):
         n = 0
@@ -69,8 +71,8 @@ class Swarm():
     def active_swarm_hash(self):
         tmp = ""
         for b in self.active_swarm:
-            tmp.append(b.hash())
-        return str(hashlib.sha256(tmp.encode('utf-8')).hexdigest())
+            tmp = tmp + b.hash()
+        return str(hashlib.sha256(tmp.encode("utf-8")).hexdigest())
 
     # sets the hash within the active swarm based on public key
     def set_hash(self, public_key, swarm_hash):
@@ -96,12 +98,13 @@ class Swarm():
         n = 0
         for b in self.active_swarm:
             if n == rdm:
-                data = "LTSTSWRM" + str(pickle.dumps(self.swarm))
+                buffer = str(pickle.dumps(self.swarm))
+                data = "LTSTSWRM" + str(24 + len(buffer)) + buffer
                 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 s.connect((b.ip_address, 1984))
-                s.send(data.encode('utf-8'))
-                data = s.recv(4096).decode('utf-8')
-                data_type, data_content = data[0:8], data[8:]
+                s.send(bytes(data, "utf-8"))
+                data = recieve(s)
+                data_type, data_content = data[0:8], data[24:]
                 if data_type == "SWRMHASH":
                     b.swarm_hash = data_content
                 s.close()
@@ -121,7 +124,7 @@ class Swarm():
         # ADD PREV_SWARM_HASH TO ACTIVE SWARM FOR THE SENDER
 
     # 
-    def update_all_swarm(self):
+    def update_all_swarm(self, settings):
         swarm_hash = self.set_hash(settings.public_key, self.active_swarm_hash())
         if self.total_unmatched(swarm_hash) > 0:
             self.send_swarm(swarm_hash, self.total_unmatched(swarm_hash))
@@ -144,5 +147,5 @@ class Bee():
     
     # generates an SHA256 hash based on its own contents and previous hash
     def hash(self):
-        tmp = self.ip_address + self.public_key + self.prev_hash + str(self.state) + str(self.created_at)
-        return str(hashlib.sha256(tmp.encode('utf-8')).hexdigest())
+        tmp = str(self.ip_address) + str(self.public_key) + str(self.prev_hash) + str(self.state) + str(self.created_at)
+        return str(hashlib.sha256(tmp.encode("utf-8")).hexdigest())

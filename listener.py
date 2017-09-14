@@ -22,30 +22,32 @@ class Listener():
     def listen(self, swarm, settings):
         while True:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  
-            s.bind(('', self.port))
             s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            s.bind(('', self.port))
             s.listen(10)
             conn, addr = s.accept()
-            data = conn.recv(4069).decode("utf-8")
+            data = recieve(conn)
             self.data_translate(data, addr, conn, swarm, settings)
             conn.close()
             s.close()
 
     # responds with swarm list in pickle form
     def requswrm(self, conn, swarm, settings):
-        data = "LTSTSWRM" + str(pickle.dumps(swarm))
-        conn.send(data).encode("utf-8")
+        buffer = str(pickle.dumps(swarm.swarm))
+        data = "LTSTSWRM" + make_16_bytes(str(24 + len(buffer)))  + buffer
+        conn.send(bytes(data, "utf-8"))
     
     # response to the latest swarm being recieved
     def ltstswrm(self, swarm, data, addr, conn):
         swarm = swarm.consolidate(pickle.loads(data), addr)
-        data = "SWRMHASH" + swarm.active_swarm_hash()
-        conn.send(data).encode("utf-8")
+        buffer = swarm.active_swarm_hash()
+        data = "SWRMHASH" + make_16_bytes(str(24+ len(buffer))) + buffer
+        conn.send(bytes(data, "utf-8"))
         swarm.update_all_swarm()
 
     # interprets the type of data recieved and acts on it
     def data_translate(self, data, addr, conn, swarm, settings):
-        data_type, data_content = data[0:8], data[8:]
+        data_type, data_content = data[0:8], data[24:]
         if data_type == "REQUSWRM":
             self.requswrm(conn, swarm, settings)
         elif data_type == "LTSTSWRM":
@@ -61,3 +63,18 @@ def encrypt(public_key, data):
 def decrypt(private_key, data):
     priv_key_obj = RSA.importKey(private_key)
     return priv_key_obj.decrypt(data)
+
+def make_16_bytes(tmp):
+    tmp = str(tmp)
+    while len(tmp) < 16:
+        tmp = '0' + tmp
+    return tmp
+
+def recieve(conn):
+    data = ''
+    t_bytes = -1
+    while len(data) != t_bytes:
+        if len(data) >= 24:
+            t_bytes = int(data[8:24])
+        data = data + conn.recv(1024).decode("utf-8")
+    return data
