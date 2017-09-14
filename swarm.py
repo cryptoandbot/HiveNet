@@ -13,7 +13,7 @@ import socket
 import pickle
 from datetime import datetime
 from random import randint
-from listener import encrypt, decrypt, recieve, make_16_bytes
+from listener import encrypt, decrypt, receive, make_16_bytes
 
 # object that has a collection of Bees within the network
 # has functions to manipulate the current swarm blockchain and transfer it
@@ -103,7 +103,7 @@ class Swarm():
                 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 s.connect((b.ip_address, 1984))
                 s.send(bytes(data, "utf-8"))
-                data = recieve(s)
+                data = receive(s)
                 data_type, data_content = data[0:8], data[24:]
                 if data_type == "SWRMHASH":
                     b.swarm_hash = data_content

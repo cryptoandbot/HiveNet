@@ -26,7 +26,7 @@ class Listener():
             s.bind(('', self.port))
             s.listen(10)
             conn, addr = s.accept()
-            data = recieve(conn)
+            data = receive(conn)
             self.data_translate(data, addr, conn, swarm, settings)
             conn.close()
             s.close()
@@ -70,7 +70,7 @@ def make_16_bytes(tmp):
         tmp = '0' + tmp
     return tmp
 
-def recieve(conn):
+def receive(conn):
     data = ''
     t_bytes = -1
     while len(data) != t_bytes:
