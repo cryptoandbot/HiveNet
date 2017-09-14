@@ -42,7 +42,7 @@ class Swarm():
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.connect((hostname, port))
         buffer = str(public_key)
-        data = "REQUSWRM" + str(24 + len(buffer)) + str(public_key)
+        data = "REQUSWRM" + make_16_bytes(str(24 + len(buffer))) + str(public_key)
         s.send(bytes(data, "utf-8"))
         data = ""
         data = receive(s)
@@ -99,7 +99,7 @@ class Swarm():
         for b in self.active_swarm:
             if n == rdm:
                 buffer = str(pickle.dumps(self.swarm))
-                data = "LTSTSWRM" + str(24 + len(buffer)) + buffer
+                data = "LTSTSWRM" + make_16_bytes(str(24 + len(buffer))) + buffer
                 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 s.connect((b.ip_address, 1984))
                 s.send(bytes(data, "utf-8"))
