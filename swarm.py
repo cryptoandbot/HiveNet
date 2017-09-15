@@ -23,6 +23,14 @@ class Swarm():
         self.active_swarm = []
         self.hash = None
 
+    def print_swarm(self):
+        print("Swarm:")
+        for b in self.swarm:
+            b.print_bee()
+        print("Active_swarm:")
+        for b in self.active_swarm:
+            b.print_bee()
+
     # joins a current swarm and updates itself or starts a new one
     def join_swarm(self, hostname, settings):
         if hostname == "queen":
@@ -31,6 +39,7 @@ class Swarm():
             self.swarm = self.eval_swarm(self.request_swarm(hostname, settings.public_key, settings.port))
             self.add_to_swarm(settings.ip_address, settings.public_key, self.swarm[-1].hash())
             self.generate_active_swarm()
+            self.print_swarm()
             self.update_all_swarm(settings)
 
     # interprets the byte stream for requested swarm and returns an array of Bees
@@ -149,3 +158,12 @@ class Bee():
     def hash(self):
         tmp = str(self.ip_address) + str(self.public_key) + str(self.prev_hash) + str(self.state) + str(self.created_at)
         return str(hashlib.sha256(tmp.encode("utf-8")).hexdigest())
+
+    def print_bee(self):
+        print("Bee:")
+        print("    ip_address: " + str(self.ip_address))
+        print("    public_key: " + str(self.public_key))
+        print("    state: " + str(self.state))
+        print("    swarm_hash: " + str(self.swarm_hash))
+        print("    created_at: " + str(self.created_at))
+        print("    updated_at: " + str(self.updated_at))
