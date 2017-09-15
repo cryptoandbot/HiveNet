@@ -149,6 +149,7 @@ class Swarm():
         swarm_hash = self.set_hash(settings.ip_address, self.active_swarm_hash())
         if self.total_unmatched(swarm_hash) > 0:
             self.send_swarm(swarm_hash, self.total_unmatched(swarm_hash))
+        self.print_swarm()
 
     # adds an ip address and public key to the swarm as active
     def add_to_swarm(self, ip_address, public_key, prev_hash):

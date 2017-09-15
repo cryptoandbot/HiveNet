@@ -51,7 +51,6 @@ class Listener():
         data_type, data_content = data[0:8], data[24:]
         if data_type == "ACTVSWRM":
             swarm.active_swarm = swarm.eval_swarm(data_content)
-        swarm.print_swarm()
         swarm.update_all_swarm(settings)
 
     # interprets the type of data recieved and acts on it
