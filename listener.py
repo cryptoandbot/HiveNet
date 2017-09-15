@@ -11,6 +11,7 @@ description: listener class and relevant functions
 from Crypto.PublicKey import RSA
 import socket
 import pickle
+from _thread import start_new_thread
 
 # running on a separate thread will listen on a port and act on data that it recieves
 class Listener():
@@ -25,10 +26,11 @@ class Listener():
             s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             s.bind(('', self.port))
             s.listen(10)
+            print("Listening")
             conn, addr = s.accept()
+            print("New connection from " + str(addr))
             data = receive(conn)
-            self.data_translate(data, addr, conn, swarm, settings)
-            conn.close()
+            start_new_thread(self.data_translate, (data, addr, conn, swarm, settings, ))
             s.close()
 
     # responds with swarm list in pickle form
@@ -38,12 +40,12 @@ class Listener():
         conn.send(bytes(data, "utf-8"))
     
     # response to the latest swarm being recieved
-    def ltstswrm(self, swarm, data, addr, conn):
-        swarm = swarm.consolidate(pickle.loads(data), addr)
+    def ltstswrm(self, swarm, data, addr, conn, settings):
+        swarm = swarm.consolidate(swarm.eval_swarm(data[24:]), addr)
         buffer = swarm.active_swarm_hash()
         data = "SWRMHASH" + make_16_bytes(str(24+ len(buffer))) + buffer
         conn.send(bytes(data, "utf-8"))
-        swarm.update_all_swarm()
+        swarm.update_all_swarm(settings)
 
     # interprets the type of data recieved and acts on it
     def data_translate(self, data, addr, conn, swarm, settings):
@@ -51,7 +53,9 @@ class Listener():
         if data_type == "REQUSWRM":
             self.requswrm(conn, swarm, settings)
         elif data_type == "LTSTSWRM":
-            self.ltstswrm(swarm, data, addr, conn)
+            self.ltstswrm(swarm, data, addr, conn, settings)
+        conn.close()
+        print("Closed connection from " + str(addr))
             
 
 # uses public key to encrypt byte data
@@ -71,10 +75,11 @@ def make_16_bytes(tmp):
     return tmp
 
 def receive(conn):
-    data = ''
+    data = ""
     t_bytes = -1
     while len(data) != t_bytes:
         if len(data) >= 24:
             t_bytes = int(data[8:24])
-        data = data + conn.recv(1024).decode("utf-8")
+        if len(data) != t_bytes:
+            data = data + conn.recv(1024).decode("utf-8")
     return data

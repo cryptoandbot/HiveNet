@@ -12,6 +12,7 @@ import hashlib
 import socket
 import pickle
 from datetime import datetime
+from time import sleep
 from random import randint
 from listener import encrypt, decrypt, receive, make_16_bytes
 
@@ -49,12 +50,14 @@ class Swarm():
     # asks the queen bee (or given ip) for the latest swarm blockchain
     def request_swarm(self, hostname, public_key, port):
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         s.connect((hostname, port))
         buffer = str(public_key)
-        data = "REQUSWRM" + make_16_bytes(str(24 + len(buffer))) + str(public_key)
+        data = "REQUSWRM" + make_16_bytes(str(24 + len(buffer))) + buffer
         s.send(bytes(data, "utf-8"))
         data = ""
         data = receive(s)
+        s.shutdown(socket.SHUT_RDWR)
         s.close()
         return data[24:]
 
@@ -84,9 +87,9 @@ class Swarm():
         return str(hashlib.sha256(tmp.encode("utf-8")).hexdigest())
 
     # sets the hash within the active swarm based on public key
-    def set_hash(self, public_key, swarm_hash):
+    def set_hash(self, ip_address, swarm_hash):
         for b in self.active_swarm:
-            if b.public_key == public_key:
+            if b.ip_address == ip_address:
                 b.swarm_hash = swarm_hash
                 break
         return swarm_hash
@@ -104,40 +107,47 @@ class Swarm():
     # waits for a reply that is the active swarm hash from the recipient
     def send_swarm(self, swarm_hash, unmatched):
         rdm = randint(1, unmatched)
-        n = 0
+        n = 1
         for b in self.active_swarm:
             if n == rdm:
                 buffer = str(pickle.dumps(self.swarm))
                 data = "LTSTSWRM" + make_16_bytes(str(24 + len(buffer))) + buffer
                 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                s.connect((b.ip_address, 1984))
+                s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+                s.connect((str(b.ip_address), 1984))
                 s.send(bytes(data, "utf-8"))
                 data = receive(s)
                 data_type, data_content = data[0:8], data[24:]
                 if data_type == "SWRMHASH":
                     b.swarm_hash = data_content
+                s.shutdown(socket.SHUT_RDWR)
                 s.close()
                 break
-            else:
+            elif b.swarm_hash != swarm_hash:
                 n += 1
 
     # synchronises two swarm blockchains
     def consolidate(self, data, addr):
-        tmp_swarm = data.generate_active_swarm()
-        prev_swarm_hash = tmp_swarm.active_swarm_hash()
+        tmp_swarm = Swarm()
+        tmp_swarm.swarm = data
+        tmp_swarm.generate_active_swarm()
+        tmp_swarm.print_swarm()
         for b in self.swarm:
-            for bb in tmp_swarm:
-                pass
+            for bb in tmp_swarm.swarm:
+                if b.public_key == bb.public_key:
+                    bb.swarm_hash = b.swarm_hash
                 ## COMBINE THE TWO SWARMS
         # GENERATE NEW ACTIVE SWARM FOR SELF
         # ADD PREV_SWARM_HASH TO ACTIVE SWARM FOR THE SENDER
+        self.swarm = tmp_swarm.swarm
+        self.generate_active_swarm()
+        return tmp_swarm
 
-    # 
+    # sends current swarm to a random bee that doesn't have a matching swarm hash
     def update_all_swarm(self, settings):
-        swarm_hash = self.set_hash(settings.public_key, self.active_swarm_hash())
+        swarm_hash = self.set_hash(settings.ip_address, self.active_swarm_hash())
         if self.total_unmatched(swarm_hash) > 0:
             self.send_swarm(swarm_hash, self.total_unmatched(swarm_hash))
-
 
     # adds an ip address and public key to the swarm as active
     def add_to_swarm(self, ip_address, public_key, prev_hash):

@@ -9,8 +9,8 @@ v 0.1
 description: runs main loop
 """
 from settings import Settings
-from listener import Listener
-from swarm import Swarm
+from listener import Listener, encrypt, decrypt
+from swarm import Swarm, Bee
 import sys
 from _thread import start_new_thread
 
