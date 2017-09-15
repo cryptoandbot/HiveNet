@@ -28,9 +28,10 @@ class Listener():
             s.listen(10)
             print("Listening")
             conn, addr = s.accept()
-            print("New connection from " + str(addr))
-            data = receive(conn)
-            start_new_thread(self.data_translate, (data, addr, conn, swarm, settings, ))
+            if str(addr[0]) != '192.168.0.1':
+                print("New connection from " + str(addr))
+                data = receive(conn)
+                start_new_thread(self.data_translate, (data, addr, conn, swarm, settings, ))
             s.close()
 
     # responds with swarm list in pickle form
@@ -43,8 +44,14 @@ class Listener():
     def ltstswrm(self, swarm, data, addr, conn, settings):
         swarm = swarm.consolidate(swarm.eval_swarm(data[24:]), addr)
         buffer = swarm.active_swarm_hash()
+        swarm.set_hash(settings.ip_address, buffer)    
         data = "SWRMHASH" + make_16_bytes(str(24+ len(buffer))) + buffer
         conn.send(bytes(data, "utf-8"))
+        data = receive(conn)
+        data_type, data_content = data[0:8], data[24:]
+        if data_type == "ACTVSWRM":
+            swarm.active_swarm = swarm.eval_swarm(data_content)
+        swarm.print_swarm()
         swarm.update_all_swarm(settings)
 
     # interprets the type of data recieved and acts on it

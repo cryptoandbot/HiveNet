@@ -103,6 +103,11 @@ class Swarm():
                 n += 1
         return n
 
+    def send_active_swarm(self, s):
+        buffer = str(pickle.dumps(self.active_swarm))
+        data = "ACTVSWRM" + make_16_bytes(str(24 + len(buffer))) + buffer
+        s.send(bytes(data, "utf-8"))
+
     # pickles and sends the whole swarm blockchain randomly
     # waits for a reply that is the active swarm hash from the recipient
     def send_swarm(self, swarm_hash, unmatched):
@@ -119,7 +124,8 @@ class Swarm():
                 data = receive(s)
                 data_type, data_content = data[0:8], data[24:]
                 if data_type == "SWRMHASH":
-                    b.swarm_hash = data_content
+                    self.set_hash(b.ip_address, data_content)
+                    self.send_active_swarm(s)
                 s.shutdown(socket.SHUT_RDWR)
                 s.close()
                 break
@@ -128,20 +134,15 @@ class Swarm():
 
     # synchronises two swarm blockchains
     def consolidate(self, data, addr):
-        tmp_swarm = Swarm()
-        tmp_swarm.swarm = data
-        tmp_swarm.generate_active_swarm()
-        tmp_swarm.print_swarm()
-        for b in self.swarm:
-            for bb in tmp_swarm.swarm:
-                if b.public_key == bb.public_key:
-                    bb.swarm_hash = b.swarm_hash
+        self.swarm = data
+        tmp_swarm = self.active_swarm
+        self.generate_active_swarm()
+        for b in tmp_swarm:
+            self.set_hash(b.ip_address, b.swarm_hash)
                 ## COMBINE THE TWO SWARMS
         # GENERATE NEW ACTIVE SWARM FOR SELF
         # ADD PREV_SWARM_HASH TO ACTIVE SWARM FOR THE SENDER
-        self.swarm = tmp_swarm.swarm
-        self.generate_active_swarm()
-        return tmp_swarm
+        return self
 
     # sends current swarm to a random bee that doesn't have a matching swarm hash
     def update_all_swarm(self, settings):

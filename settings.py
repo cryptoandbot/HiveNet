@@ -31,5 +31,5 @@ class Settings():
     # sets a private key and public key as readable bytes
     def set_key_pair(self):
         key = RSA.generate(2048)
-        self.private_key = key.exportKey('DER')
-        self.public_key = key.publickey().exportKey('DER')
+        self.private_key = key.exportKey('PEM')
+        self.public_key = key.publickey().exportKey('PEM')
