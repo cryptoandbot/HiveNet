@@ -27,6 +27,9 @@
 2.2..................COMMUNICATION
 2.2.1....................PROTOCOLS
 2.2.2....................DESCRIPTORS
+2.3..................FUNCTIONALITY
+2.3.1....................TERMINOLOGY
+2.3.2....................SWARM
 
 1 OVERVIEW
 1.1 CONCEPT
@@ -156,10 +159,102 @@ Blockchain          A ledger of all transactions.
 
 2.2 COMMUNICATION
     2.2.1 PROTOCOLS
-	2.2.1.1 When communication is established between two nodes, only a single message is allowed to be sent at a time.  After receiving a message, this permits another message to be sent.  This does not apply for the first message in the connection.
+	    2.2.1.1 When communication is established between two nodes, only a single message is allowed to be sent at a time.  After receiving a message, this permits another message to be sent.  This does not apply for the first message in the connection.
     2.2.2 DESCRIPTORS
         2.2.2.1 PREFIX STRUCTURE
             2.2.2.1.1 In a communication, the first 8 bits will define the nature of the communication
                 REQUSWRM - request current swarm blockchain
                 LTSTSWRM - following content is the latest swarm
                 SWRMHASH - hash of the active swarm
+                ACTVSWRM - following content is the active swarm including swarm hashes
+                REQURCNT - request for recipient to reconnect to sender.
+                HLTHCHCK - tells recipient that it's connection is being checked.
+2.3 FUNCTIONALITY
+    2.3.1 TERMINOLOGY
+        - Listener - bee currently part of the swarm running it's Listener functions
+        - Client - bee that is actively trying to establish a connection with another bee (Listener)
+        - Connection - socket connection that has been accepted between two bees
+        - Data type - leading definition of the content of the socket transfer
+        - Self - data contained within the class that represents the bee being described.
+    2.3.2 SWARM
+        2.3.2.1 JOINING A SWARM
+            1. Listener is waiting for a connection from a client.
+            2. When connected, client sends public key with data type REQUSWRM.
+            3. Listener adds client to swarm blockchain.
+            4. Listener generates new active swarm and transfers hash values.
+            5. Listener sends latest swarm to client with data type LTSTSWRM.
+            6. Listener sends active swarm to client with data type ACTVSWRM.
+            7. Client generates active swarm hash and adds it to self bee in self active swarm.
+            8. Client sends listener the active swarm hash with data type SWRMHASH.
+            9. Client runs update swarm.
+            10. Listener adds hash to self active swarm.
+            11. Listener runs update swarm.
+        2.3.2.2 UPDATE SWARM
+            1. Client generates active swarm and active swarm hash which is added to self active swarm.
+            2. Client looks through self active swarm to find total bees that don't match self hash.
+            3. If total not matching > 0, then randomly selects one and makes a connection with the listener otherwise exits without running update swarm again.
+            4. Client sends listener latest swarm with data type LTSTSWRM.
+            5. Listener consolidates latest swarm with self swarm.
+            6. Client sends listener active swarm with data type ACTVSWRM.
+            7. Listener generates a swarm hash and adds it to self active swarm.
+            8. Listener sends client the swarm hash with data type SWRMHASH.
+            9. Client adds listener hash to self active swarm.
+            10. Client and listener run update swarm.
+        2.3.2.3 HEALTH CHECK
+            Two separate components (general and specific).
+            General - Constantly checks when the last health check was in each bee in the active swarm.
+            Check bee - Makes a quick connection with the bee to see if it is active and running.
+                        Is triggered by the general health check when the time is ready or if any type of connection fails 3 times in a row.
+            2.3.2.3.1 GENERAL HEALTH CHECK
+                1. When connection established initially, start health check as a separate thread.
+                2. Every 10 seconds, goes through the active swarm and checks if there is any bee that has been 6 minutes since last health check.
+                3. If a bee is ready, runs a bee health check.
+                4. Once bee health check is completed, continues with general health check.
+            2.3.2.3.2 BEE HEALTH CHECK
+                1. Try establish a connection with the listener.
+                2. If connection fails 3 times, then remove bee from swarm.
+                3. If connection established with listener, then send message to listener with self public key with data type HLTHCHCK.
+                4. Listener replies to client with self public key with data type HLTHCHCK.
+                5. If client recieves public key, it then checks it on the active swarm to see if it is accurate.
+                    If it is accurate, then it updates the health check time on self active swarm.
+                    Otherwise, it asks the listener to reconnect.
+                6. If listener reply takes longer than 6 seconds, then removes bee from swarm.
+        2.3.2.4 ADDITIONAL FUNCTIONS
+            2.3.2.4.1 REQUEST SWARM
+                        Sends public key with data type REQUSWRM.
+            2.3.2.4.2 ADD TO SWARM
+                        Adds a new bee to the swarm with ip address and public key.
+            2.3.2.4.3 GENERATE ACTIVE SWARM
+                        Goes through the swarm and adds/removes bees in a new blockchain and then merges across the hashes in the old active swarm.
+            2.3.2.4.4 ACTIVE SWARM HASH
+                        Generates a hash of the active swarm using the ip address, public key and created at.
+            2.3.2.4.5 ADD HASH
+                        Takes in the ip address or public key and a hash where it is then added to the relevant bee within the active swarm.
+            2.3.2.4.6 SEND LATEST SWARM
+                        Pickles the swarm and sends it through a connection with data type LTSTSWRM.
+            2.3.2.4.7 SEND ACTIVE SWARM
+                        Pickles the active swarm and sends it through a connection with data type ACTVSWRM.
+            2.3.2.4.8 SEND HASH
+                        Sends self active swarm hash as a string with data type SWRMHASH.
+            2.3.2.4.9 TOTAL UNMATCHED
+                        Compares the swarm hashes of bees in active swarm with self active swarm hash and returns total as an integer that are not matching.
+            2.3.2.4.10 UPDATE BEE
+                        Randomly selects a bee to update swarm.
+            2.3.2.4.11 REMOVE BEE
+                        1. Adds a removal block to swarm.
+                        2. Generates a new active swarm and transfers hashes across.
+                        3. Runs update swarm.
+            2.3.2.4.12 REMOVE SELF
+                        Must run as part of an exit algorithm to savely exit application.
+                        1. Adds a removal block to self swarm with self details.
+                        2. Generates a hash and transfers hashes.
+                        3. Runs an update swarm.
+                        4. If no connection can be established, simply dumps all memory and shuts off.
+                        5. After a single update swarm is completed, dumps memory and shuts off.
+            2.3.2.4.13 REQUEST RECONNECT
+                        Listener dumps all data and reconnects to a client as if it is the first connection. Listener no longer becomes a listener half way through and becomes a client and vice versa.
+                        1. Client sends listener self ip address with REQURCNT.
+                        2. Client removes listener bee from swarm and runs an update swarm incase connection fails.
+                        3. Listener waits 24 seconds then reconnects to the client via the ip address given using the initial connection protocols written in 2.3.2.1.
+            2.3.2.4.14 ACCEPT CONNECTION
+                        Listener checks if the connection is from an ip address within the active swarm. This is performed on all data types that are not REQUSWRM.
