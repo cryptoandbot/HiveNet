@@ -196,7 +196,7 @@ Blockchain          A ledger of all transactions.
             4. Client sends listener latest swarm with data type LTSTSWRM.
             5. Listener consolidates latest swarm with self swarm.
             6. Client sends listener active swarm with data type ACTVSWRM.
-            7. Listener generates a swarm hash and adds it to self active swarm.
+            7. Listener generates a new active swarm and generates a swarm hash and adds it to self active swarm.
             8. Listener sends client the swarm hash with data type SWRMHASH.
             9. Client adds listener hash to self active swarm.
             10. Client and listener run update swarm.

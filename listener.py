@@ -30,36 +30,39 @@ class Listener():
             conn, addr = s.accept()
             if str(addr[0]) != '192.168.0.1':
                 print("New connection from " + str(addr))
-                data = receive(conn)
-                start_new_thread(self.data_translate, (data, addr, conn, swarm, settings, ))
+                data_type, data_content = receive(conn)
+                self.data_translate(data_type, data_content, addr, conn, swarm, settings)
             s.close()
 
     # responds with swarm list in pickle form
-    def requswrm(self, conn, swarm, settings):
-        buffer = str(pickle.dumps(swarm.swarm))
-        data = "LTSTSWRM" + make_16_bytes(str(24 + len(buffer)))  + buffer
-        conn.send(bytes(data, "utf-8"))
-    
-    # response to the latest swarm being recieved
-    def ltstswrm(self, swarm, data, addr, conn, settings):
-        swarm = swarm.consolidate(swarm.eval_swarm(data[24:]), addr)
-        buffer = swarm.active_swarm_hash()
-        swarm.set_hash(settings.ip_address, buffer)    
-        data = "SWRMHASH" + make_16_bytes(str(24+ len(buffer))) + buffer
-        conn.send(bytes(data, "utf-8"))
+    def new_bee_join_swarm(self, conn, swarm, settings, ip_address, public_key):
+        swarm.add_bee(ip_address, data_content, swarm[-1].hash())
+        swarm.generate_active_swarm()
+        swarm.send_swarm(conn)
+        swarm.send_active_swarm(conn)
         data = receive(conn)
         data_type, data_content = data[0:8], data[24:]
-        if data_type == "ACTVSWRM":
-            swarm.active_swarm = swarm.eval_swarm(data_content)
+        swarm.set_hash(ip_address, data_content)
+        swarm.update_all_swarm(settings)
+    
+    # response to the latest swarm being recieved
+    def updating_swarm(self, swarm, raw_swarm, addr, conn, settings):
+        swarm.consolidate(swarm.eval_swarm(raw_swarm), addr)
+        data_type, data_content = receive(conn)
+        swarm.active_swarm = swarm.eval_swarm(data_content)
+        swarm.generate_active_swarm()
+        swarm_hash = swarm.set_hash(settings.ip_address, swarm.active_swarm_hash())
+        buffer = str(swarm_hash)
+        send(conn, "SWRMHASH", buffer)
+        swarm.print_swarm()
         swarm.update_all_swarm(settings)
 
     # interprets the type of data recieved and acts on it
-    def data_translate(self, data, addr, conn, swarm, settings):
-        data_type, data_content = data[0:8], data[24:]
+    def data_translate(self, data_type, data_content, addr, conn, swarm, settings):
         if data_type == "REQUSWRM":
-            self.requswrm(conn, swarm, settings)
+            self.new_bee_join_swarm(conn, swarm, settings, addr[0], data_content)
         elif data_type == "LTSTSWRM":
-            self.ltstswrm(swarm, data, addr, conn, settings)
+            self.updating_swarm(swarm, data_content, addr, conn, settings)
         conn.close()
         print("Closed connection from " + str(addr))
             
@@ -87,5 +90,9 @@ def receive(conn):
         if len(data) >= 24:
             t_bytes = int(data[8:24])
         if len(data) != t_bytes:
-            data = data + conn.recv(1024).decode("utf-8")
-    return data
+            data = data + conn.recv(1).decode("utf-8")
+    return data[0:8], data[24:]
+
+def send(conn, data_type, buffer):
+    data = data_type + make_16_bytes(str(24 + len(buffer))) + buffer
+    conn.send(bytes(data, "utf-8"))
