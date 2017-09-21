@@ -41,10 +41,10 @@ class Listener():
         swarm.set_hash(settings.ip_address, swarm.active_swarm_hash())
         swarm.send_swarm(conn)
         swarm.send_active_swarm(conn)
-        data = receive(conn)
-        data_type, data_content = data[0:8], data[24:]
+        data_type, data_content = receive(conn)
         swarm.set_hash(ip_address, data_content)
         swarm.print_swarm()
+        conn.close()
         swarm.update_all_swarm(settings)
     
     # response to the latest swarm being recieved
@@ -57,6 +57,7 @@ class Listener():
         buffer = str(swarm_hash)
         send(conn, "SWRMHASH", buffer)
         swarm.print_swarm()
+        conn.close()
         swarm.update_all_swarm(settings)
 
     # interprets the type of data recieved and acts on it
@@ -65,7 +66,6 @@ class Listener():
             self.new_bee_join_swarm(conn, swarm, settings, addr[0], data_content)
         elif data_type == "LTSTSWRM":
             self.updating_swarm(swarm, data_content, addr, conn, settings)
-        conn.close()
         print("Closed connection from " + str(addr))
             
 
