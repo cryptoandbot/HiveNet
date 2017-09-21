@@ -62,7 +62,7 @@ class Swarm():
         data_type, data_content = receive(conn)
         return data_content
 
-    def receive_active_swarm(conn):
+    def receive_active_swarm(self, conn):
         data_type, data_content = receive(self, conn)
         return data_content
 
