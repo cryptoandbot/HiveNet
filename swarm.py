@@ -63,7 +63,7 @@ class Swarm():
         return data_content
 
     def receive_active_swarm(self, conn):
-        data_type, data_content = receive(self, conn)
+        data_type, data_content = receive(conn)
         return data_content
 
     # generates a hash for the current active swarm from individual hashes
