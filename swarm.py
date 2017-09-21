@@ -138,14 +138,16 @@ class Swarm():
         rdm = randint(1, total_unmatched)
         n = 1
         s = None
+        ip_address = None
         for b in self.active_swarm:
             if n == rdm and b.swarm_hash != swarm_hash:
                 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
                 s.connect((str(b.ip_address), 1984))
+                ip_address = b.ip_address
             elif b.swarm_hash != swarm_hash:
                 n += 1
-        return s
+        return s, ip_address
 
     # synchronises two swarm blockchains
     def consolidate(self, data, addr):
