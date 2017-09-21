@@ -38,11 +38,13 @@ class Listener():
     def new_bee_join_swarm(self, conn, swarm, settings, ip_address, public_key):
         swarm.add_bee(ip_address, public_key, swarm.swarm[-1].hash())
         swarm.generate_active_swarm()
+        swarm.set_hash(settings.ip_address, swarm.active_swarm_hash())
         swarm.send_swarm(conn)
         swarm.send_active_swarm(conn)
         data = receive(conn)
         data_type, data_content = data[0:8], data[24:]
         swarm.set_hash(ip_address, data_content)
+        swarm.print_swarm()
         swarm.update_all_swarm(settings)
     
     # response to the latest swarm being recieved
