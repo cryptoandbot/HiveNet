@@ -35,7 +35,7 @@ class Swarm():
     # joins a current swarm and updates itself or starts a new one
     def join_swarm(self, hostname, settings):
         if hostname == "queen":
-            self.add_to_swarm(settings.ip_address, settings.public_key, 0)
+            self.add_bee(settings.ip_address, settings.public_key, 0)
         else:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
