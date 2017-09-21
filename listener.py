@@ -36,7 +36,7 @@ class Listener():
 
     # responds with swarm list in pickle form
     def new_bee_join_swarm(self, conn, swarm, settings, ip_address, public_key):
-        swarm.add_bee(ip_address, data_content, swarm[-1].hash())
+        swarm.add_bee(ip_address, public_key, swarm[-1].hash())
         swarm.generate_active_swarm()
         swarm.send_swarm(conn)
         swarm.send_active_swarm(conn)
