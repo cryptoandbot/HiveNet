@@ -116,10 +116,23 @@ class Swarm():
         tmp_swarm = self.active_swarm
         self.active_swarm = []
         prev_hash = 0
+        tmp_swarm_list = []
         for b in self.swarm:
             if b.state == 1:
-                self.active_swarm.append(Bee(b.ip_address, b.public_key, prev_hash, b.state, b.created_at))
-                prev_hash = self.active_swarm[-1].hash()
+                for bb in tmp_swarm_list:
+                    if b.ip_address == bb.ip_address:
+                        bb[2] += 1
+                    else:
+                        tmp_swarm_list.append([b.ip_address, b.public_key, b.state, b.created_at])
+            else:
+                for bb in tmp_swarm_list:
+                    if b.ip_address == bb.ip_address:
+                        bb[2] -= 1
+                        if bb[2] == 0:
+                            tmp_swarm_list.remove(bb)
+        for bb in tmp_swarm_list:
+            self.active_swarm.append(Bee(bb[0], bb[1], prev_hash, 1, bb[3]))
+            prev_hash = self.active_swarm[-1].hash()
         for b in tmp_swarm:
             for bb in self.active_swarm:
                 if b.ip_address == bb.ip_address:

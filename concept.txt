@@ -108,7 +108,7 @@ HiveNet             A decentralized data storage network.
 Listener            An object with a looping function that listens in a port for incoming data and acts on it.
 Swarm               The blockchain of the network of nodes that have been involved with HiveNet.
 Active swarm        The network of nodes that are currently online and donating bandwidth to HiveNet.
-Node                A single computer that exists within a swarm.
+Bee                 A single computer that exists within a swarm.
 Forest              A blockchain of the trees for each file that is uploaded to HiveNet.
 Tree                A merkle tree that defines a file based on its bundles.
 Bundle              A small segment of a file.
@@ -146,7 +146,6 @@ Blockchain          A ledger of all transactions.
                  - public key
                  - state change (up, down, or change in settings)
                  - bandwidth allocation
-                 - 
         2.1.2.8 When a node recieves a new swarm blockchain, it runs a merge process which generates a new swarm blockchain incorporating any new information. It then creates a hash from this, and responds to the sender with this. It then generates an active swarm list.
         2.1.2.9 When a node recieves a swarm blockchain hash after sending the swarm blockchain, it adds this to its active swarm list object's current swarm hash, and replies with its own current swarm hash.
         2.1.2.10 When a node recieves a replying swarm blockchain hash, it updates its active swarm list, and sends the swarm blockchain to a random active node that doesn't share the same hash.
@@ -156,6 +155,14 @@ Blockchain          A ledger of all transactions.
     2.1.4 BUNDLE
 
     2.1.5 HONEY
+        2.1.5.1 OVERVIEW
+            Honey exists as the token to access storage space within HiveNet. A given amount of Honey provides the ability to purchase a static amount of storage space on a dynamically allocated storage facility (i.e. the swarm).
+        2.1.5.2 IMPLEMENTATION
+        2.1.5.3 MINING
+        2.1.5.4 SECONDARY MARKET
+        2.1.5.5 VALUE
+        2.1.5.6 PROBLEMS
+            - How to promote bees to remain within the swarm and collect more honey, particularly when the total amount of honey left is diminished.
 
 2.2 COMMUNICATION
     2.2.1 PROTOCOLS
