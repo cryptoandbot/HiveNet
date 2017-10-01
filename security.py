@@ -16,13 +16,13 @@ class Encryptor():
 
 	def pub_priv_key_pair_gen(self):
 		key = RSA.generate(2048)
-        self.private_key = key.exportKey('PEM')
-        self.public_key = key.publickey().exportKey('PEM')
+		self.private_key = key.exportKey('PEM')
+		self.public_key = key.publickey().exportKey('PEM')
 
 	def encrypt(self, data):
-	    pub_key_obj = RSA.importKey(self.public_key)
-	    return pub_key_obj.encrypt(data, "x")[0]
+		pub_key_obj = RSA.importKey(self.public_key)
+		return pub_key_obj.encrypt(data, "x")[0]
 
 	def decrypt(self, data):
-	    priv_key_obj = RSA.importKey(self.private_key)
-	    return priv_key_obj.decrypt(data)
+		priv_key_obj = RSA.importKey(self.private_key)
+		return priv_key_obj.decrypt(data)

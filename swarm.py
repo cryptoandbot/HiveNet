@@ -16,6 +16,9 @@ import pickle
 from datetime import datetime
 from time import sleep
 from random import randint
+from connection import *
+from listener import Listener
+from security import Encryptor
 
 # CLASSES
 
@@ -26,10 +29,16 @@ class Swarm():
 		self.hash = None
 
 	def print_swarm(self):
-		pass
+		print("Swarm:")
+		for b in self.swarm:
+			b.print_bee()
+		print()
+		print("Active swarm:")
+		for b in self.active_swarm:
+			b.print_bee()
 
-	def request_swarm(self, conn, public_key):
-		send("JOINSWRM", public_key, conn)
+	def request_swarm(self, conn, public_key, encryptor):
+		send("JOINSWRM", public_key, conn, encryptor)
 
 	def add_to_swarm(self, ip_address, public_key, prev_hash):
 		self.swarm.append(Bee(ip_address, public_key, prev_hash, 1, datetime.now()))
@@ -39,11 +48,11 @@ class Swarm():
 		tmp_bees = []
 		for b in self.swarm:
 			already_in_swarm = False
-			if b.state = 1:
+			if b.state == 1:
 				for bb in tmp_bees:
 					if b.public_key == bb.public_key:
 						already_in_swarm = True
-				if alread_in_swarm == False:
+				if already_in_swarm == False:
 					tmp_bees.append(b)
 			else:
 				for bb in tmp_bees:
@@ -52,7 +61,7 @@ class Swarm():
 		self.active_swarm = []
 		prev_hash = 0
 		for b in tmp_bees:
-			self.active_swarm.append(Bee(b.ip_address, b.public_key, prev_hash))
+			self.active_swarm.append(Bee(b.ip_address, b.public_key, prev_hash, 1, b.created_at))
 			prev_hash = self.active_swarm[-1].hash()
 		for b in tmp_active_swarm:
 			for bb in self.active_swarm:
@@ -61,9 +70,9 @@ class Swarm():
 
 	def active_swarm_hash(self):
 		tmp = ""
-        for b in self.active_swarm:
-            tmp = tmp + b.hash()
-        return str(hashlib.sha256(tmp.encode("utf-8")).hexdigest())
+		for b in self.active_swarm:
+			tmp = tmp + b.hash()
+		return str(hashlib.sha256(tmp.encode("utf-8")).hexdigest())
 
 	def add_hash(self, ip_address, swarm_hash):
 		for b in self.active_swarm:
@@ -72,11 +81,11 @@ class Swarm():
 
 	def send_latest_swarm(self, conn, encryptor):
 		data_content = str(pickle.dumps(self.swarm))
-		send("LTSTSWRM", data_content, conn)
+		send("LTSTSWRM", data_content, conn, encryptor)
 
 	def send_active_swarm(self, conn, encryptor):
 		data_content = str(pickle.dumps(self.active_swarm))
-		send("ACTVSWRM", data_content, conn)
+		send("ACTVSWRM", data_content, conn, encryptor)
 
 	def receive_active_swarm_hash(self, conn, encryptor):
 		data_type, data_content = receive(conn, encryptor)
@@ -87,7 +96,7 @@ class Swarm():
 		return data_content
 
 	def send_active_swarm_hash(self, conn, swarm_hash, encryptor):
-		send("SWRMHASH", swarm_hash, conn)
+		send("SWRMHASH", swarm_hash, conn, encryptor)
 
 	def total_unmatched(self):
 		pass
@@ -129,15 +138,15 @@ class Swarm():
 		return data_content
 
 	def eval_swarm(self, raw_swarm):
-        return pickle.loads(eval(raw_swarm))
+		return pickle.loads(eval(raw_swarm))
 
 	def join_swarm(self, host, self_ip_address, encryptor):
 		if host == "queen":
 			self.add_to_swarm(self_ip_address, encryptor.public_key, 0)
 		else:
 			conn = open_socket()
-			conn = connect_to_host(conn, host, 1984)
-			self.request_swarm(conn, encryptor.public_key)
+			connect_to_host(conn, host, 1984)
+			self.request_swarm(conn, encryptor.public_key, encryptor)
 			self.swarm = self.eval_swarm(self.receive_swarm(conn, encryptor))
 			self.active_swarm = self.eval_swarm(self.receive_active_swarm(conn, encryptor))
 			actv_swrm_hash = self.active_swarm_hash()
@@ -150,18 +159,19 @@ class Swarm():
 
 class Bee():
 	def __init__(self, ip_address, public_key, prev_hash, state, created_at):
-        self.ip_address = ip_address
-        self.public_key = public_key
-        self.prev_hash = prev_hash
-        self.state = state
-        self.swarm_hash = None
-        self.healthcheck_at = None
-        self.created_at = created_at
-        self.updated_at = datetime.now()
+		self.ip_address = ip_address
+		self.public_key = public_key
+		self.prev_hash = prev_hash
+		self.state = state
+		self.swarm_hash = None
+		self.healthcheck_at = None
+		self.created_at = created_at
+		self.updated_at = datetime.now()
 
 	def hash(self):
 		tmp = str(self.ip_address) + str(self.public_key) + str(self.prev_hash) + str(self.state) + str(self.created_at)
-        return str(hashlib.sha256(tmp.encode("utf-8")).hexdigest())
+		return str(hashlib.sha256(tmp.encode("utf-8")).hexdigest())
 
 	def print_bee(self):
-		pass
+		print("Bee:  " + str(self.ip_address))
+		print("      " + str(self.swarm_hash))
