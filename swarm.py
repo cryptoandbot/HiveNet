@@ -8,167 +8,148 @@ v 0.1
 
 description: swarm/node classes and relevant functions
 """
+
+# IMPORTS
 import hashlib
 import socket
 import pickle
 from datetime import datetime
 from time import sleep
 from random import randint
-from listener import encrypt, decrypt, receive, send, make_16_bytes
 
-# object that has a collection of Bees within the network
-# has functions to manipulate the current swarm blockchain and transfer it
+# CLASSES
+
 class Swarm():
-    def __init__(self):
-        self.swarm = []
-        self.active_swarm = []
-        self.hash = None
+	def __init__(self):
+		self.swarm = []
+		self.active_swarm = []
+		self.hash = None
 
-    def print_swarm(self):
-        print("Swarm:")
-        for b in self.swarm:
-            b.print_bee()
-        print("Active_swarm:")
-        for b in self.active_swarm:
-            b.print_bee()
+	def print_swarm(self):
+		pass
 
-    # joins a current swarm and updates itself or starts a new one
-    def join_swarm(self, hostname, settings):
-        if hostname == "queen":
-            self.add_bee(settings.ip_address, settings.public_key, 0)
-        else:
-            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            s.connect((hostname, settings.port))
-            self.request_swarm(s, settings.public_key)
-            self.swarm = self.eval_swarm(self.receive_swarm(s))
-            self.active_swarm = self.eval_swarm(self.receive_active_swarm(s))
-            swarm_hash = self.set_hash(settings.ip_address, self.active_swarm_hash())
-            self.send_active_swarm_hash(s, swarm_hash)
-            s.close()
-            self.print_swarm()
-            self.update_all_swarm(settings)
+	def request_swarm(self, conn, public_key):
+		send("JOINSWRM", public_key, conn)
 
-    # interprets the byte stream for requested swarm and returns an array of Bees
-    def eval_swarm(self, raw_swarm):
-        return pickle.loads(eval(raw_swarm))
+	def add_to_swarm(self, ip_address, public_key, prev_hash):
+		self.swarm.append(Bee(ip_address, public_key, prev_hash, 1, datetime.now()))
 
-    # asks the queen bee (or given ip) for the latest swarm blockchain
-    def request_swarm(self, conn, public_key):
-        buffer = str(public_key)      
-        send(conn, "REQUSWRM", buffer)
+	def generate_active_swarm(self):
+		tmp_active_swarm = self.active_swarm
+		tmp_bees = []
+		for b in self.swarm:
+			already_in_swarm = False
+			if b.state = 1:
+				for bb in tmp_bees:
+					if b.public_key == bb.public_key:
+						already_in_swarm = True
+				if alread_in_swarm == False:
+					tmp_bees.append(b)
+			else:
+				for bb in tmp_bees:
+					if b.public_key == bb.public_key:
+						tmp_bees.remove(bb)
+		self.active_swarm = []
+		prev_hash = 0
+		for b in tmp_bees:
+			self.active_swarm.append(Bee(b.ip_address, b.public_key, prev_hash))
+			prev_hash = self.active_swarm[-1].hash()
+		for b in tmp_active_swarm:
+			for bb in self.active_swarm:
+				if b.public_key == bb.public_key:
+					bb.swarm_hash = b.swarm_hash
 
-    def receive_swarm(self, conn):
-        data_type, data_content = receive(conn)
-        return data_content
-
-    def receive_active_swarm(self, conn):
-        data_type, data_content = receive(conn)
-        return data_content
-
-    # generates a hash for the current active swarm from individual hashes
-    def active_swarm_hash(self):
-        tmp = ""
+	def active_swarm_hash(self):
+		tmp = ""
         for b in self.active_swarm:
             tmp = tmp + b.hash()
         return str(hashlib.sha256(tmp.encode("utf-8")).hexdigest())
 
+	def add_hash(self, ip_address, swarm_hash):
+		for b in self.active_swarm:
+			if b.ip_address == ip_address:
+				b.swarm_hash = swarm_hash
 
-    # sets the hash within the active swarm based on public key
-    def set_hash(self, ip_address, swarm_hash):
-        for b in self.active_swarm:
-            if b.ip_address == ip_address:
-                b.swarm_hash = swarm_hash
-                break
-        return swarm_hash
+	def send_latest_swarm(self, conn, encryptor):
+		data_content = str(pickle.dumps(self.swarm))
+		send("LTSTSWRM", data_content, conn)
 
-    def send_active_swarm_hash(self, conn, swarm_hash):
-        buffer = str(swarm_hash)
-        send(conn, "SWRMHASH", buffer)
-    
-    def send_swarm(self, conn):
-        buffer = str(pickle.dumps(self.swarm))
-        send(conn, "LTSTSWRM", buffer)
+	def send_active_swarm(self, conn, encryptor):
+		data_content = str(pickle.dumps(self.active_swarm))
+		send("ACTVSWRM", data_content, conn)
 
-    def send_active_swarm(self, conn):
-        buffer = str(pickle.dumps(self.active_swarm))
-        send(conn, "ACTVSWRM", buffer)
+	def receive_active_swarm_hash(self, conn, encryptor):
+		data_type, data_content = receive(conn, encryptor)
+		if data_type == "SWRMHASH":
+			pass
+		else:
+			pass
+		return data_content
 
-    # sends current swarm to a random bee that doesn't have a matching swarm hash
-    def update_all_swarm(self, settings):
-        self.generate_active_swarm()
-        swarm_hash = self.set_hash(settings.ip_address, self.active_swarm_hash())
-        if self.total_unmatched(swarm_hash) > 0:
-            conn, ip_address = self.random_connection(swarm_hash, self.total_unmatched(swarm_hash))
-            self.send_swarm(conn)
-            self.send_active_swarm(conn)
-            data_type, data_content = receive(conn)
-            self.set_hash(ip_address, data_content)
-            self.print_swarm()
-            conn.close()
+	def send_active_swarm_hash(self, conn, swarm_hash, encryptor):
+		send("SWRMHASH", swarm_hash, conn)
 
-    # adds an ip address and public key to the swarm as active
-    def add_bee(self, ip_address, public_key, prev_hash):
-        self.swarm.append(Bee(ip_address, public_key, prev_hash, 1, datetime.now()))
+	def total_unmatched(self):
+		pass
 
-    # goes through the blockchain to figure out active bees
-    def generate_active_swarm(self):
-        tmp_swarm = self.active_swarm
-        self.active_swarm = []
-        prev_hash = 0
-        tmp_swarm_list = []
-        for b in self.swarm:
-            if b.state == 1:
-                for bb in tmp_swarm_list:
-                    if b.ip_address == bb.ip_address:
-                        bb[2] += 1
-                    else:
-                        tmp_swarm_list.append([b.ip_address, b.public_key, b.state, b.created_at])
-            else:
-                for bb in tmp_swarm_list:
-                    if b.ip_address == bb.ip_address:
-                        bb[2] -= 1
-                        if bb[2] == 0:
-                            tmp_swarm_list.remove(bb)
-        for bb in tmp_swarm_list:
-            self.active_swarm.append(Bee(bb[0], bb[1], prev_hash, 1, bb[3]))
-            prev_hash = self.active_swarm[-1].hash()
-        for b in tmp_swarm:
-            for bb in self.active_swarm:
-                if b.ip_address == bb.ip_address:
-                    bb.swarm_hash = b.swarm_hash
- 
-    # returns int for the total number of bees in the swarm that don't match the active swarm hash of self
-    # used to randomly find one to send swarm blockchain to
-    def total_unmatched(self, swarm_hash):
-        n = 0
-        for b in self.active_swarm:
-            if b.swarm_hash != swarm_hash:
-                n += 1
-        return n
+	def update_bee(self):
+		pass
 
-    def random_connection(self, swarm_hash, total_unmatched):
-        rdm = randint(1, total_unmatched)
-        n = 1
-        s = None
-        ip_address = None
-        for b in self.active_swarm:
-            if n == rdm and b.swarm_hash != swarm_hash:
-                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-                s.connect((str(b.ip_address), 1984))
-                ip_address = b.ip_address
-            elif b.swarm_hash != swarm_hash:
-                n += 1
-        return s, ip_address
+	def remove_bee(self):
+		pass
 
-    # synchronises two swarm blockchains
-    def consolidate(self, data, addr):
-        self.swarm = data
+	def remove_self(self):
+		pass
 
-# object that defines a single node on the network
+	def request_reconnect(self):
+		pass
+
+	def accept_connection(self):
+		pass
+
+	def health_check(self):
+		pass
+
+	def health_check_bee(self):
+		pass
+
+	def receive_swarm(self, conn, encryptor):
+		data_type, data_content = receive(conn, encryptor)
+		if data_type == "LTSTSWRM":
+			pass
+		else:
+			pass
+		return data_content
+	def receive_active_swarm(self, conn, encryptor):
+		data_type, data_content = receive(conn, encryptor)
+		if data_type == "ACTVSWRM":
+			pass
+		else:
+			pass
+		return data_content
+
+	def eval_swarm(self, raw_swarm):
+        return pickle.loads(eval(raw_swarm))
+
+	def join_swarm(self, host, self_ip_address, encryptor):
+		if host == "queen":
+			self.add_to_swarm(self_ip_address, encryptor.public_key, 0)
+		else:
+			conn = open_socket()
+			conn = connect_to_host(conn, host, 1984)
+			self.request_swarm(conn, encryptor.public_key)
+			self.swarm = self.eval_swarm(self.receive_swarm(conn, encryptor))
+			self.active_swarm = self.eval_swarm(self.receive_active_swarm(conn, encryptor))
+			actv_swrm_hash = self.active_swarm_hash()
+			self.add_hash(self_ip_address, actv_swrm_hash)
+			self.send_active_swarm_hash(conn, actv_swrm_hash, encryptor)
+			self.update_swarm
+
+	def update_swarm(self):
+		pass
+
 class Bee():
-    def __init__(self, ip_address, public_key, prev_hash, state, created_at):
+	def __init__(self, ip_address, public_key, prev_hash, state, created_at):
         self.ip_address = ip_address
         self.public_key = public_key
         self.prev_hash = prev_hash
@@ -177,17 +158,10 @@ class Bee():
         self.healthcheck_at = None
         self.created_at = created_at
         self.updated_at = datetime.now()
-    
-    # generates an SHA256 hash based on its own contents and previous hash
-    def hash(self):
-        tmp = str(self.ip_address) + str(self.public_key) + str(self.prev_hash) + str(self.state) + str(self.created_at)
+
+	def hash(self):
+		tmp = str(self.ip_address) + str(self.public_key) + str(self.prev_hash) + str(self.state) + str(self.created_at)
         return str(hashlib.sha256(tmp.encode("utf-8")).hexdigest())
 
-    def print_bee(self):
-        print("Bee:")
-        print("    ip_address: " + str(self.ip_address))
-        print("    public_key: " + str(self.public_key))
-        print("    state: " + str(self.state))
-        print("    swarm_hash: " + str(self.swarm_hash))
-        print("    created_at: " + str(self.created_at))
-        print("    updated_at: " + str(self.updated_at))
+	def print_bee(self):
+		pass
