@@ -156,6 +156,15 @@ class Swarm():
 
 	def update_swarm(self):
 		pass
+		# generate active swarm
+		# add hash to swarm
+		# find unmatched
+		# select random bee
+		# send latest swarm
+		# send active swarm
+		# receive hash
+		# add hash to swarm
+		# update swarm
 
 class Bee():
 	def __init__(self, ip_address, public_key, prev_hash, state, created_at):

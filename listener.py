@@ -46,3 +46,9 @@ class Listener():
 			swarm.print_swarm()
 		elif data_type == "LTSTSWRM":
 			pass
+			# consolidate latest swarm
+			# receive active swarm
+			# swarm hash
+			# add hash to swarm
+			# send hash
+			# update swarm
