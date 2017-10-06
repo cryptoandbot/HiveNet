@@ -42,7 +42,7 @@ class Listener():
 			swarm.send_latest_swarm(conn, encryptor)
 			swarm.send_active_swarm(conn, encryptor)
 			swarm.add_hash(addr[0], swarm.receive_active_swarm_hash(conn, encryptor))
-			swarm.update_swarm()
+			swarm.update_swarm(self.ip_address, encryptor)
 			swarm.print_swarm()
 		elif data_type == "LTSTSWRM":
 			pass

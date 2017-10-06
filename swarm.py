@@ -98,11 +98,34 @@ class Swarm():
 	def send_active_swarm_hash(self, conn, swarm_hash, encryptor):
 		send("SWRMHASH", swarm_hash, conn, encryptor)
 
-	def total_unmatched(self):
-		pass
+	def total_unmatched(self, swarm_hash):
+		n = 0
+		for b in self.active_swarm:
+			if b.swarm_hash != swarm_hash:
+			    n += 1
+		return n
 
-	def update_bee(self):
-		pass
+	def random_bee(self, n, swarm_hash):
+		tmp_n = 1
+		rdm = randint(1, n)
+		b_ip = None
+		for b in self.active_swarm:
+			if b.swarm_hash != swarm_hash:
+				if tmp_n == rdm:
+					b_ip = b.ip_address
+				tmp_n += 1
+		return b_ip
+
+	def update_bee(self, ip_address, encryptor):
+		bee = None
+		for b in self.active_swarm:
+			if b.ip_address == ip_address:
+				bee = b
+		conn = open_socket()
+		connect_to_host(conn, bee.ip_address, 1984)
+		self.send_latest_swarm(conn, encryptor)
+                self.send_active_swarm(conn, encryptor)
+                self.add_hash(bee.ip_address, self.receive_active_swarm_hash(conn, encryptor))
 
 	def remove_bee(self):
 		pass
@@ -152,19 +175,15 @@ class Swarm():
 			actv_swrm_hash = self.active_swarm_hash()
 			self.add_hash(self_ip_address, actv_swrm_hash)
 			self.send_active_swarm_hash(conn, actv_swrm_hash, encryptor)
-			self.update_swarm
+			self.update_swarm(self_ip_address, encryptor)
 
-	def update_swarm(self):
-		pass
-		# generate active swarm
-		# add hash to swarm
-		# find unmatched
-		# select random bee
-		# send latest swarm
-		# send active swarm
-		# receive hash
-		# add hash to swarm
-		# update swarm
+	def update_swarm(self, self_ip_address, encryptor):
+		self.generate_active_swarm()
+		swarm_hash = self.active_swarm_hash()
+		self.add_hash(self_ip_address, swarm_hash)
+		self.update_bee(self.random_bee(self.total_unmatched(swarm_hash), encryptor)
+		if self.total_unmatched(swarm_hash) > 0:
+			self.update_swarm(self_ip_address, encryptor)
 
 class Bee():
 	def __init__(self, ip_address, public_key, prev_hash, state, created_at):
