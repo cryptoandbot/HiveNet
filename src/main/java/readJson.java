@@ -27,7 +27,7 @@ public class readJson {
             Map<String, Map<String, List<Integer>>> finalDict = mockData.get("final");
 
             //  Pass data to EVCalculator
-            Map<String, Map<String, Object>> results = EVCalculator.calculatePerWebsite(overDict, underDict, finalDict);
+            Map<String, Map<String, Object>> results = EVCalc.calculatePerWebsite(overDict, underDict, finalDict);
 
             // Print results for verification
             System.out.println("=== EVCalculator Results ===");

@@ -1,6 +1,6 @@
 import java.util.*;
 
-public class EVCalculator { 
+public class EVCalc {
     // Convert American odds to decimal 
     public static double convertOddsToDecimal(int americanOdds) { 
         if (americanOdds > 0) {
